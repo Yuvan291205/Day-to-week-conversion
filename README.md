@@ -36,39 +36,57 @@ streamlit run days_to_weeks.py
 ```
 import streamlit as st
 from pymongo import MongoClient
+from datetime import datetime
 
 st.title("Days to Weeks Converter")
 
-# connect to MongoDB
+
 try:
     client = MongoClient("mongodb://127.0.0.1:27017/")
-    # create database
-    db = client["database_name"]
-    # create collection
-    collection = db["collection_name"]
+    db = client["days_to_week_convertor"]
+    collection = db["conversions"]
     st.success("Connected to MongoDB")
 except Exception as e:
     st.error(f"Failed to connect to MongoDB: {e}")
 
-days = st.number_input("Enter number of days:", min_value=0, step=1, value=0)
 
-if days is not None:
-    # Calculate weeks and remaining days
-    weeks = days // 7
-    remaining_days = days % 7
+days_input = st.text_input(
+    "Enter days separated by commas (Example: 10, 15, 21)"
+)
 
-    # Display result
-    st.write(f"{weeks} week(s) and {remaining_days} day(s)")
-    
-    # Insert data into MongoDB
-    if st.button("Save to Database"):
-        data = {"days": days, "weeks": weeks, "remaining_days": remaining_days}
-        collection.insert_one(data)
+
+if st.button("Convert & Save"):
+
+    try:
+        input_array = [int(x.strip()) for x in days_input.split(",")]
+
+        output_array = []
+
+        for d in input_array:
+            weeks = d // 7
+            remaining = d % 7
+            output_array.append([weeks, remaining])
+
+            st.write(f"{d} days = {weeks} week(s) and {remaining} day(s)")
+
+        
+        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        document = {
+            "timestamp": current_time,
+            "input_array": input_array,
+            "output_array": output_array
+        }
+
+        collection.insert_one(document)
+
         st.success("Data saved to MongoDB!")
+
+    except:
+        st.error("Please enter valid numbers separated by commas.")
 ```
 
 ## Output:
+<img width="1919" height="1008" alt="Screenshot 2026-02-17 081022" src="https://github.com/user-attachments/assets/ceeae9a8-a0bc-4b35-94bd-a2be6168b0d0" />
 
-<img width="1919" height="906" alt="Screenshot 2026-02-13 190717" src="https://github.com/user-attachments/assets/ecee9e7d-d7f1-42a0-b920-43be4dd0bcec" />
-<img width="1425" height="1006" alt="Screenshot 2026-02-13 190702" src="https://github.com/user-attachments/assets/b64e5371-9360-4a55-86fa-0e06d7c6f5c4" />
+<img width="1013" height="1010" alt="Screenshot 2026-02-17 081003" src="https://github.com/user-attachments/assets/a252e3d2-4ded-4cfe-84b8-5fcd04099d46" />
 
